@@ -25,9 +25,13 @@
 #import <SystemConfiguration/SystemConfiguration.h>
 
 typedef NS_ENUM(NSInteger, AFNetworkReachabilityStatus) {
+    //网络未知
     AFNetworkReachabilityStatusUnknown          = -1,
+    //网络不可达
     AFNetworkReachabilityStatusNotReachable     = 0,
+    //WWAN 网络 手机自带的网络 2G，3G，4G
     AFNetworkReachabilityStatusReachableViaWWAN = 1,
+    //Wi-Fi
     AFNetworkReachabilityStatusReachableViaWiFi = 2,
 };
 
@@ -113,11 +117,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Starts monitoring for changes in network reachability status.
+ 开始监视网络可达性状态的变化
  */
 - (void)startMonitoring;
 
 /**
  Stops monitoring for changes in network reachability status.
+ 停止监视网络可达性状态的变化
  */
 - (void)stopMonitoring;
 
@@ -127,6 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Returns a localized string representation of the current network reachability status.
+ // 返回当前网络可达状态的本地化字符串表示形式
  */
 - (NSString *)localizedNetworkReachabilityStatusString;
 

@@ -28,11 +28,26 @@
 #import <ifaddrs.h>
 #import <netdb.h>
 
+// 网络环境发生改变的时候接收的通知
 NSString * const AFNetworkingReachabilityDidChangeNotification = @"com.alamofire.networking.reachability.change";
+// 网络环境发生改变的时候接收的通知 同时会携带一组参数 根据这个key获取网络的status
 NSString * const AFNetworkingReachabilityNotificationStatusItem = @"AFNetworkingReachabilityNotificationStatusItem";
 
+
+/**
+ 定义一个网络变化的回调
+
+ @param status 网络状态
+ */
 typedef void (^AFNetworkReachabilityStatusBlock)(AFNetworkReachabilityStatus status);
 
+
+/**
+ 把枚举值转换成字符串
+
+ @param status 枚举值
+ @return 字符串
+ */
 NSString * AFStringFromNetworkReachabilityStatus(AFNetworkReachabilityStatus status) {
     switch (status) {
         case AFNetworkReachabilityStatusNotReachable:
@@ -47,11 +62,23 @@ NSString * AFStringFromNetworkReachabilityStatus(AFNetworkReachabilityStatus sta
     }
 }
 
+
+/**
+ 根据SCNetworkReachabilityFlags 状态来获取当前的网络状态
+
+ @param flags
+ @return
+ */
 static AFNetworkReachabilityStatus AFNetworkReachabilityStatusForFlags(SCNetworkReachabilityFlags flags) {
+    // 是否可以到达
     BOOL isReachable = ((flags & kSCNetworkReachabilityFlagsReachable) != 0);
+    // 在联网之前需要建立连接
     BOOL needsConnection = ((flags & kSCNetworkReachabilityFlagsConnectionRequired) != 0);
+    // 是否可以自动连接
     BOOL canConnectionAutomatically = (((flags & kSCNetworkReachabilityFlagsConnectionOnDemand ) != 0) || ((flags & kSCNetworkReachabilityFlagsConnectionOnTraffic) != 0));
+    // 是否可以连接，在不需要用户手动设置的前提下
     BOOL canConnectWithoutUserInteraction = (canConnectionAutomatically && (flags & kSCNetworkReachabilityFlagsInterventionRequired) == 0);
+    //是否可以联网的条件 1.能够到达 2.不需要建立连接或者不需要用户手动设置连接 就表示能够连接到网络
     BOOL isNetworkReachable = (isReachable && (!needsConnection || canConnectWithoutUserInteraction));
 
     AFNetworkReachabilityStatus status = AFNetworkReachabilityStatusUnknown;
@@ -78,6 +105,7 @@ static AFNetworkReachabilityStatus AFNetworkReachabilityStatusForFlags(SCNetwork
  * a queued notification (for an earlier status condition) is processed after
  * the later update, resulting in the listener being left in the wrong state.
  */
+// 接收网络变化有两种形式 一种block 一种通知
 static void AFPostReachabilityStatusChange(SCNetworkReachabilityFlags flags, AFNetworkReachabilityStatusBlock block) {
     AFNetworkReachabilityStatus status = AFNetworkReachabilityStatusForFlags(flags);
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -113,6 +141,7 @@ static void AFNetworkReachabilityReleaseCallback(const void *info) {
 
 @implementation AFNetworkReachabilityManager
 
+// 创建一个单例模式
 + (instancetype)sharedManager {
     static AFNetworkReachabilityManager *_sharedManager = nil;
     static dispatch_once_t onceToken;
@@ -124,6 +153,7 @@ static void AFNetworkReachabilityReleaseCallback(const void *info) {
 }
 
 #ifndef __clang_analyzer__
+// 通过一个socket地址来初始化。 首先新建 SCNetworkReachabilityRef 对象，然后调用initWithReachability: 方法。记得手动管理内存。
 + (instancetype)managerForDomain:(NSString *)domain {
     SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, [domain UTF8String]);
 
@@ -134,6 +164,7 @@ static void AFNetworkReachabilityReleaseCallback(const void *info) {
 #endif
 
 #ifndef __clang_analyzer__
+// 通过一个socket地址来初始化。 首先新建 SCNetworkReachabilityRef 对象，然后调用initWithReachability: 方法。记得手动管理内存。
 + (instancetype)managerForAddress:(const void *)address {
     SCNetworkReachabilityRef reachability = SCNetworkReachabilityCreateWithAddress(kCFAllocatorDefault, (const struct sockaddr *)address);
     AFNetworkReachabilityManager *manager = [[self alloc] initWithReachability:reachability];
@@ -195,6 +226,9 @@ static void AFNetworkReachabilityReleaseCallback(const void *info) {
 
 #pragma mark -
 
+/**
+ 开始监听网络变化
+ */
 - (void)startMonitoring {
     [self stopMonitoring];
 
@@ -214,8 +248,10 @@ static void AFNetworkReachabilityReleaseCallback(const void *info) {
     };
 
     id networkReachability = self.networkReachability;
+    
     SCNetworkReachabilityContext context = {0, (__bridge void *)callback, AFNetworkReachabilityRetainCallback, AFNetworkReachabilityReleaseCallback, NULL};
     SCNetworkReachabilitySetCallback((__bridge SCNetworkReachabilityRef)networkReachability, AFNetworkReachabilityCallback, &context);
+    // 给RunLoop中添加networkReachability ，用来对网络请求发生改变进行监控
     SCNetworkReachabilityScheduleWithRunLoop((__bridge SCNetworkReachabilityRef)networkReachability, CFRunLoopGetMain(), kCFRunLoopCommonModes);
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0),^{
@@ -226,11 +262,16 @@ static void AFNetworkReachabilityReleaseCallback(const void *info) {
     });
 }
 
+
+/**
+ 停止监听网络变化
+ */
 - (void)stopMonitoring {
     if (!self.networkReachability) {
         return;
     }
 
+    // 从RunLoop中移除对网络的监听
     SCNetworkReachabilityUnscheduleFromRunLoop((__bridge SCNetworkReachabilityRef)self.networkReachability, CFRunLoopGetMain(), kCFRunLoopCommonModes);
 }
 
