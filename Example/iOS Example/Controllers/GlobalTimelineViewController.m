@@ -36,14 +36,12 @@
 
 - (void)reload:(__unused id)sender {
     self.navigationItem.rightBarButtonItem.enabled = NO;
-
     NSURLSessionTask *task = [Post globalTimelinePostsWithBlock:^(NSArray *posts, NSError *error) {
         if (!error) {
             self.posts = posts;
             [self.tableView reloadData];
         }
     }];
-
     [self.refreshControl setRefreshingWithStateOfTask:task];
 }
 
@@ -51,15 +49,11 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
     self.title = NSLocalizedString(@"AFNetworking", nil);
-
     self.refreshControl = [[UIRefreshControl alloc] initWithFrame:CGRectMake(0.0f, 0.0f, self.tableView.frame.size.width, 100.0f)];
     [self.refreshControl addTarget:self action:@selector(reload:) forControlEvents:UIControlEventValueChanged];
     [self.tableView.tableHeaderView addSubview:self.refreshControl];
-
     self.tableView.rowHeight = 70.0f;
-    
     [self reload:nil];
 }
 

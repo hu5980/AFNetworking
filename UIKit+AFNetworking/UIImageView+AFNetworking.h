@@ -56,6 +56,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// @name Setting Image
 ///--------------------
 
+/*
+ 四个图片下载方法
+ */
+
 /**
  Asynchronously downloads an image from the specified URL, and sets it once the request is finished. Any previous image request for the receiver will be cancelled.
 
@@ -65,6 +69,7 @@ NS_ASSUME_NONNULL_BEGIN
 
  @param url The URL used for the image request.
  */
+
 - (void)setImageWithURL:(NSURL *)url;
 
 /**
@@ -99,6 +104,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Cancels any executing image operation for the receiver, if one exists.
+ */
+/*
+ 取消图片下载
  */
 - (void)cancelImageDownloadTask;
 

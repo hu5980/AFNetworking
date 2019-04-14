@@ -109,6 +109,8 @@
     return [self GET:URLString parameters:parameters progress:nil success:success failure:failure];
 }
 
+
+/// GET请求
 - (NSURLSessionDataTask *)GET:(NSString *)URLString
                    parameters:(id)parameters
                      progress:(void (^)(NSProgress * _Nonnull))downloadProgress
@@ -116,6 +118,7 @@
                       failure:(void (^)(NSURLSessionDataTask * _Nullable, NSError * _Nonnull))failure
 {
 
+    // 1.0 生成一个task
     NSURLSessionDataTask *dataTask = [self dataTaskWithHTTPMethod:@"GET"
                                                         URLString:URLString
                                                        parameters:parameters
@@ -124,6 +127,7 @@
                                                           success:success
                                                           failure:failure];
 
+    // 开始请求
     [dataTask resume];
 
     return dataTask;
@@ -259,11 +263,17 @@
                                          failure:(void (^)(NSURLSessionDataTask *, NSError *))failure
 {
     NSError *serializationError = nil;
+    //把参数，还有各种东西转化为一个request
+    //2.0 看一下如何拼接Request的
     NSMutableURLRequest *request = [self.requestSerializer requestWithMethod:method URLString:[[NSURL URLWithString:URLString relativeToURL:self.baseURL] absoluteString] parameters:parameters error:&serializationError];
     if (serializationError) {
         if (failure) {
+            
+            //忽略一些编译器的警告
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu"
+            //如果解析错误，直接返回
+            //self.completionQueue,这个是我们自定义的
             dispatch_async(self.completionQueue ?: dispatch_get_main_queue(), ^{
                 failure(nil, serializationError);
             });
@@ -274,6 +284,7 @@
     }
 
     __block NSURLSessionDataTask *dataTask = nil;
+    //调用另外一个方法dataTaskWithRequest去拿到我们最终需要的NSURLSessionDataTask实例
     dataTask = [self dataTaskWithRequest:request
                           uploadProgress:uploadProgress
                         downloadProgress:downloadProgress

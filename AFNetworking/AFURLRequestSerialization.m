@@ -199,7 +199,7 @@ NSArray * AFQueryStringPairsFromKeyAndValue(NSString *key, id value) {
 #pragma mark -
 
 /**
- 监听元素啊的集合
+ 监听元素的集合
 
  @return
  */
@@ -215,7 +215,7 @@ static NSArray * AFHTTPRequestSerializerObservedKeyPaths() {
           NSStringFromSelector(@selector(networkServiceType)),       //网络服务类型
           NSStringFromSelector(@selector(timeoutInterval))];         //超时时间
     });
-
+    //就是一个数组里装了很多方法的名字,
     return _AFHTTPRequestSerializerObservedKeyPaths;
 }
 
@@ -289,8 +289,9 @@ static void *AFHTTPRequestSerializerObserverContext = &AFHTTPRequestSerializerOb
 
     // HTTP Method Definitions; see http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html
     self.HTTPMethodsEncodingParametersInURI = [NSSet setWithObjects:@"GET", @"HEAD", @"DELETE", nil];
-
+    //每次都会重置变化
     self.mutableObservedChangedKeyPaths = [NSMutableSet set];
+    //给这自己些方法添加观察者为自己，就是request的各种属性，set方法
     for (NSString *keyPath in AFHTTPRequestSerializerObservedKeyPaths()) {
         if ([self respondsToSelector:NSSelectorFromString(keyPath)]) {
             [self addObserver:self forKeyPath:keyPath options:NSKeyValueObservingOptionNew context:AFHTTPRequestSerializerObserverContext];
@@ -410,6 +411,7 @@ forHTTPHeaderField:(NSString *)field
                                 parameters:(id)parameters
                                      error:(NSError *__autoreleasing *)error
 {
+    //断言，debug模式下，如果缺少改参数，crash
     NSParameterAssert(method);
     NSParameterAssert(URLString);
 
@@ -419,13 +421,17 @@ forHTTPHeaderField:(NSString *)field
 
     NSMutableURLRequest *mutableRequest = [[NSMutableURLRequest alloc] initWithURL:url];
     mutableRequest.HTTPMethod = method;
-   // 设置mutableRequest的一些属性，这些属性就是AFHTTPRequestSerializerObservedKeyPaths() 返回的数组
+   //将request的各种属性循环遍历
+   //AFHTTPRequestSerializerObservedKeyPaths() 这是一个C方法返回一个存储方法名字的数组
     for (NSString *keyPath in AFHTTPRequestSerializerObservedKeyPaths()) {
+        //self.mutableObservedChangedKeyPaths 在-init方法对这个集合进行了初始化，
+        //并且对当前类的和NSUrlRequest相关的那些属性添加了KVO监听：
         if ([self.mutableObservedChangedKeyPaths containsObject:keyPath]) {
+            //把给自己设置的属性给request设置
             [mutableRequest setValue:[self valueForKeyPath:keyPath] forKey:keyPath];
         }
     }
-
+    //将传入的parameters进行编码，并添加到request中
     mutableRequest = [[self requestBySerializingRequest:mutableRequest withParameters:parameters error:error] mutableCopy];
 
 	return mutableRequest;
@@ -537,6 +543,12 @@ forHTTPHeaderField:(NSString *)field
 #pragma mark - AFURLRequestSerialization
 
 // URL请求的序列化
+/*
+ 1.从self.HTTPRequestHeaders中拿到设置的参数，赋值要请求的request里去
+ 2.把请求网络的参数，从array dic set这些容器类型转换为字符串，具体转码方式，我们可以使用自定义的方式，也可以用AF默认的转码方式。自定义的方式没什么好说的，想怎么去解析由你自己来决定
+ 
+
+ */
 - (NSURLRequest *)requestBySerializingRequest:(NSURLRequest *)request
                                withParameters:(id)parameters
                                         error:(NSError *__autoreleasing *)error
@@ -544,7 +556,8 @@ forHTTPHeaderField:(NSString *)field
     NSParameterAssert(request);
 
     NSMutableURLRequest *mutableRequest = [request mutableCopy];
-
+    
+    //从自己的head里去遍历，如果有值则设置给request的head
     [self.HTTPRequestHeaders enumerateKeysAndObjectsUsingBlock:^(id field, id value, BOOL * __unused stop) {
         if (![request valueForHTTPHeaderField:field]) {
             [mutableRequest setValue:value forHTTPHeaderField:field];
@@ -552,9 +565,9 @@ forHTTPHeaderField:(NSString *)field
     }];
 
     NSString *query = nil;
-    // 参数存在 对参数序列化
+    //来把各种类型的参数，array dic set转化成字符串，给request
     if (parameters) {
-        //查询字符串序列化
+        //自定义的解析方式
         if (self.queryStringSerialization) {
             NSError *serializationError;
             query = self.queryStringSerialization(request, parameters, &serializationError);
@@ -567,6 +580,7 @@ forHTTPHeaderField:(NSString *)field
                 return nil;
             }
         } else {
+            //默认解析方式
             switch (self.queryStringSerializationStyle) {
                 case AFHTTPRequestQueryStringDefaultStyle:
                     query = AFQueryStringFromParameters(parameters);
@@ -614,7 +628,7 @@ forHTTPHeaderField:(NSString *)field
         // 如果新值为null，从mutableObservedChangedKeyPaths 中移除keyPath
         if ([change[NSKeyValueChangeNewKey] isEqual:[NSNull null]]) {
             [self.mutableObservedChangedKeyPaths removeObject:keyPath];
-        } else {  // 如果新值为null，添加keyPath 到mutableObservedChangedKeyPaths 中
+        } else {  // 如果新值不为null，添加keyPath 到mutableObservedChangedKeyPaths 中
             [self.mutableObservedChangedKeyPaths addObject:keyPath];
         }
     }
