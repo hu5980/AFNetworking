@@ -411,6 +411,7 @@ forHTTPHeaderField:(NSString *)field
                                 parameters:(id)parameters
                                      error:(NSError *__autoreleasing *)error
 {
+    NSLog(@"++++++++++第四步 请求序列化  设置方法类型 设置请求头++++++++++++++");
     //断言，debug模式下，如果缺少改参数，crash
     NSParameterAssert(method);
     NSParameterAssert(URLString);
@@ -555,6 +556,7 @@ forHTTPHeaderField:(NSString *)field
 {
     NSParameterAssert(request);
 
+    NSLog(@"++++++++++第五步 根据方法类型 完成请求序列化 ++++++++++++++");
     NSMutableURLRequest *mutableRequest = [request mutableCopy];
     
     //从自己的head里去遍历，如果有值则设置给request的head

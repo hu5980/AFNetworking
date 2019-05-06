@@ -43,7 +43,7 @@
 
 + (NSURLSessionDataTask *)globalTimelinePostsWithBlock:(void (^)(NSArray *posts, NSError *error))block {
     return [[AFAppDotNetAPIClient sharedClient] GET:@"/weather/index" parameters:@{@"key":@"11c2e33c22a0e8e5fc33ef10c5560e93",@"cityname":@"深圳"} progress:nil success:^(NSURLSessionDataTask * __unused task, id JSON) {
-        NSLog(@"data = %@",JSON);
+      //  NSLog(@"data = %@",JSON);
         NSArray *postsFromResponse = [JSON valueForKeyPath:@"data"];
         NSMutableArray *mutablePosts = [NSMutableArray arrayWithCapacity:[postsFromResponse count]];
         for (NSDictionary *attributes in postsFromResponse) {

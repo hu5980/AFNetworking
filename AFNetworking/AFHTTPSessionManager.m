@@ -67,6 +67,7 @@
            sessionConfiguration:(NSURLSessionConfiguration *)configuration
 {
     self = [super initWithSessionConfiguration:configuration];
+    NSLog(@"++++++++++++第二步AFHTTPSessionManager 初始化 设置baseURL 设置requestSerializer 设置 responseSerializer ++++++++++++");
     if (!self) {
         return nil;
     }
@@ -78,7 +79,9 @@
 
     self.baseURL = url;
 
+    // 请求序列化
     self.requestSerializer = [AFHTTPRequestSerializer serializer];
+    // 响应序列化
     self.responseSerializer = [AFJSONResponseSerializer serializer];
 
     return self;
@@ -118,6 +121,7 @@
                       failure:(void (^)(NSURLSessionDataTask * _Nullable, NSError * _Nonnull))failure
 {
 
+    NSLog(@"+++++++++第三部 生成 datatask +++++++++++");
     // 1.0 生成一个task
     NSURLSessionDataTask *dataTask = [self dataTaskWithHTTPMethod:@"GET"
                                                         URLString:URLString
@@ -128,6 +132,8 @@
                                                           failure:failure];
 
     // 开始请求
+    NSLog(@"+++++++++第九步 请求执行 +++++++++++");
+   // NSLog(@"当前线程 = %@",[NSThread currentThread]);
     [dataTask resume];
 
     return dataTask;
@@ -143,9 +149,7 @@
             success(task);
         }
     } failure:failure];
-
     [dataTask resume];
-
     return dataTask;
 }
 
@@ -283,6 +287,7 @@
         return nil;
     }
 
+    NSLog(@"++++++++++第六步 根据request生成dataTask+++++++++++");
     __block NSURLSessionDataTask *dataTask = nil;
     //调用另外一个方法dataTaskWithRequest去拿到我们最终需要的NSURLSessionDataTask实例
     dataTask = [self dataTaskWithRequest:request

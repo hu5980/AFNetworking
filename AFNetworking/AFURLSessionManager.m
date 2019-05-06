@@ -265,6 +265,7 @@ typedef void (^AFURLSessionTaskCompletionHandler)(NSURLResponse *response, id re
               task:(NSURLSessionTask *)task
 didCompleteWithError:(NSError *)error
 {
+    NSLog(@"+++++++++第十步  02 网络请求结束 当前线程 ++++++++++++",[NSThread currentThread]);
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu"
     //1）强引用self.manager，防止被提前释放；因为self.manager声明为weak,类似Block
@@ -313,6 +314,7 @@ didCompleteWithError:(NSError *)error
          //url_session_manager_processing_queue AF的并行队列
         // 并发的去解析
         dispatch_async(url_session_manager_processing_queue(), ^{
+            NSLog(@"+++++++++第十一步  并发进行解析 当前线程%@ ++++++++++++",[NSThread currentThread]);
             NSError *serializationError = nil;
             //解析数据
             responseObject = [manager.responseSerializer responseObjectForResponse:task.response data:data error:&serializationError];
@@ -331,6 +333,7 @@ didCompleteWithError:(NSError *)error
             //回调结果
             dispatch_group_async(manager.completionGroup ?: url_session_manager_completion_group(), manager.completionQueue ?: dispatch_get_main_queue(), ^{
                 if (self.completionHandler) {
+                    NSLog(@"+++++++++第十二步 数据同步到主线程 当前线程%@ ++++++++++++",[NSThread currentThread]);
                     self.completionHandler(task.response, responseObject, serializationError);
                 }
 
@@ -349,6 +352,7 @@ didCompleteWithError:(NSError *)error
           dataTask:(__unused NSURLSessionDataTask *)dataTask
     didReceiveData:(NSData *)data
 {
+    NSLog(@"+++++++++第十步  01 接收 网路请求数据++++++++++++");
     //拼接数据
     [self.mutableData appendData:data];
 }
@@ -552,6 +556,7 @@ static NSString * const AFNSURLSessionTaskDidSuspendNotification = @"com.alamofi
  @return AFURLSessionManager实例对象
  */
 - (instancetype)initWithSessionConfiguration:(NSURLSessionConfiguration *)configuration {
+    NSLog(@"++++++++++第一步 AFURLSessionManager 初始化 设置sessionConfiguration 设置operationQueue，设置session，设置responseSerializer 设置securityPolicy 设置reachabilityManager 设置mutableTaskDelegatesKeyedByTaskIdentifier ++++++++++");
     self = [super init];
     if (!self) {
         return nil;
@@ -677,6 +682,7 @@ static NSString * const AFNSURLSessionTaskDidSuspendNotification = @"com.alamofi
               downloadProgress:(nullable void (^)(NSProgress *downloadProgress)) downloadProgressBlock
              completionHandler:(void (^)(NSURLResponse *response, id responseObject, NSError *error))completionHandler
 {
+    NSLog(@"++++++++++第八步 将delegate 与 task 相关联 存储到mutableTaskDelegatesKeyedByTaskIdentifier 字典中++++++++++++");
     AFURLSessionManagerTaskDelegate *delegate = [[AFURLSessionManagerTaskDelegate alloc] init];
     delegate.manager = self;
     delegate.completionHandler = completionHandler;
@@ -825,6 +831,7 @@ static NSString * const AFNSURLSessionTaskDidSuspendNotification = @"com.alamofi
     __block NSURLSessionDataTask *dataTask = nil;
     //第一件事，创建NSURLSessionDataTask，里面适配了Ios8以下taskIdentifiers，函数创建task对象。
     //其实现应该是因为iOS 8.0以下版本中会并发地创建多个task对象，而同步有没有做好，导致taskIdentifiers 不唯一…这边做了一个串行处理
+    NSLog(@"++++++++++第七步 session 生成task，并且将task 设置到 AFURLSessionManagerTaskDelegate 中++++++++++++");
     url_session_manager_create_task_safely(^{
         dataTask = [self.session dataTaskWithRequest:request];
     });

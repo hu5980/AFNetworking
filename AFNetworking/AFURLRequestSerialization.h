@@ -162,8 +162,7 @@ typedef NS_ENUM(NSUInteger, AFHTTPRequestQueryStringSerializationStyle) {
  @param value The value set as default for the specified header, or `nil`
  设置HTTP客户机发出的请求对象中设置的HTTP头的值。如果' nil '，删除该标题的现有值
  */
-- (void)setValue:(nullable NSString *)value
-forHTTPHeaderField:(NSString *)field;
+- (void)setValue:(nullable NSString *)value forHTTPHeaderField:(NSString *)field;
 
 /**
  Returns the value for the HTTP headers set in the request serializer.
